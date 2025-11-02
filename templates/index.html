@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Visual Search Hub</title>
+
+<style>
+  :root{ --accent:#6676f0; --accent-dark:#5866d9; --border:#e6e6e9; --muted:#6b7280; }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,AppleSDGothicNeo,Malgun Gothic,sans-serif;max-width:860px;margin:auto;padding:36px 20px}
+  h2{font-size:28px;margin:0 0 12px}
+  p.lead{color:var(--muted);margin:0 0 24px}
+  .field{margin:18px 0}
+  .label{font-weight:700;margin-bottom:8px}
+  .input,.filebox{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#fff;font-size:16px}
+  .filebox{display:flex;align-items:center;gap:12px}
+  .filebox input[type="file"]{display:none}
+  .filebtn{border:1px solid var(--border);background:#fafafa;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .filename{color:var(--muted);font-size:14px}
+  .hint{color:var(--muted);font-size:14px;margin-top:10px}
+  .submit{width:100%;margin-top:22px;padding:16px 20px;font-size:20px;font-weight:700;color:#fff;background:var(--accent);border:none;border-radius:12px;cursor:pointer}
+  .submit:hover{background:var(--accent-dark)}
+</style>
+
+<h2> Image Search (DINO + CLIP) </h2>
+<p class="lead">이미지 업로드 또는 텍스트 입력 중 하나를 선택하고 <b>검색</b>을 눌러주세요.</p>
+
+<!-- 백엔드는 분리(/search_image, /search_text). 프런트에서 action을 동적으로 전환 -->
+<form id="unifiedForm" action="#" method="post" enctype="multipart/form-data">
+  <!-- 이미지 업로드 -->
+  <div class="field">
+    <div class="label">이미지 업로드</div>
+    <div class="filebox">
+      <label class="filebtn" for="file">파일 선택</label>
+      <input id="file" type="file" name="file" accept="image/*" />
+      <span id="fileName" class="filename">선택된 파일 없음</span>
+    </div>
+  </div>
+
+  <!-- 텍스트 검색 -->
+  <div class="field">
+    <div class="label">텍스트 검색</div>
+    <input class="input" type="text" name="query" placeholder="ex: cherry blossoms in Japan(*Type in English)" />
+    <!--<div class="hint">※ 이미지와 텍스트가 동시에 있을 땐 이미지가 우선됩니다.</div>-->
+  </div>
+
+  <button class="submit" type="submit">검색</button>
+</form>
+
+<script>
+  // 파일명 표시
+  const fileInput = document.getElementById('file');
+  const fileName  = document.getElementById('fileName');
+  fileInput.addEventListener('change', () => {
+    fileName.textContent = fileInput.files?.[0]?.name || '선택된 파일 없음';
+  });
+
+  // 제출 시 목적지 라우트 결정
+  const form = document.getElementById('unifiedForm');
+  form.addEventListener('submit', (e) => {
+    const hasFile  = fileInput.files && fileInput.files.length > 0;
+    const hasQuery = (form.query.value || '').trim().length > 0;
+
+    if (!hasFile && !hasQuery) {
+      e.preventDefault();
+      alert('이미지 또는 텍스트를 입력하세요.');
+      return;
+    }
+
+    // 라우팅: 이미지 우선
+    if (hasFile) {
+      form.action = '/search_image';
+    } else {
+      form.action = '/search_text';
+    }
+  });
+</script>

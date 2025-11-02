@@ -1,0 +1,71 @@
+<!doctype html><meta charset="utf-8">
+<title>이미지 검색 결과</title>
+<style>
+  body{font-family:system-ui,Malgun Gothic,sans-serif;max-width:1000px;margin:auto;padding:24px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .card{border:1px solid #ddd;border-radius:12px;padding:10px}
+  img{width:100%;height:180px;object-fit:cover;border-radius:8px}
+  small{color:#666}
+  .like{cursor:pointer;border:1px solid #ccc;border-radius:8px;padding:6px 10px;background:#fafafa}
+  .liked{background:#ffe7ef;border-color:#ff6b9a}
+  .topbar a{margin-right:12px}
+</style>
+<div class="topbar">
+  <a href="/">← 검색 창으로 돌아가기</a>
+  <a href="/favorites">♥ 즐겨찾기</a>
+</div>
+
+<h2>이미지 검색 결과</h2>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>업로드한 이미지</h3>
+  <img src="{{ query_url }}" style="max-width:380px; height:auto">
+</div>
+
+<div class="grid">
+  {% for r in results %}
+    <div class="card" data-mid="{{ r.mongo_id }}" data-fn="{{ r.filename }}">
+      <img src="/mongo/{{ r.mongo_id }}" alt="{{ r.filename }}">
+      <div><b>#{{ r.rank }}</b> {{ r.filename }}</div>
+      {% if r.score is not none %}
+        <div><small>similarity: {{ '%.4f'|format(r.score) }}</small></div>
+      {% endif %}
+      <button 
+    class="like-btn {{ 'liked' if r.liked else '' }}" 
+    onclick="toggleLike('{{ r.mongo_id }}', '{{ r.filename }}', this)"
+>
+    {{ '♥ 저장됨' if r.liked else '♡ 저장' }}
+</button>
+
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+async function toggleLike(mongo_id, filename, btn) {
+    const liked = btn.classList.contains("liked");
+    const url = liked ? "/unlike" : "/like";
+    const body = liked ? { mongo_id } : { mongo_id, filename };
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+    const j = await res.json();
+
+    if (!j.ok) {
+        alert(j.msg || "오류 발생");
+        return;
+    }
+
+    // UI 토글
+    if (liked) {
+        btn.classList.remove("liked");
+        btn.textContent = "♡ 저장";
+    } else {
+        btn.classList.add("liked");
+        btn.textContent = "♥ 저장됨";
+    }
+}
+</script>
